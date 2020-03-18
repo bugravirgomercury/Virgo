@@ -1,4 +1,4 @@
-# Virgo
+# :virgo: Virgo
 Virgo is a C++ library wrapping the Win32 C APIs into reasonable set of classes.
 
 ## How To Modify
