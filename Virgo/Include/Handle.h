@@ -4,6 +4,12 @@
 #include <utility>
 #include <type_traits>
 
+#ifdef _DEBUG
+#include <sstream>
+#endif
+
+#include "Win32Exception.h"
+
 namespace Virgo 
 {
 	/**
@@ -35,7 +41,7 @@ namespace Virgo
 		 * Copy constructor.
 		 */
 		explicit Handle(const HandleType& other)
-			: handle_(INVALID_HANDLE_VALUE)
+			: handle_(INVALID_HANDLE_VALUE) nothrow(false)
 		{
 			// HELPREQUESTED: Maybe get process handle from the handle and pass it onto 
 			// DuplicateHandle function for cross-process handle duplication.
@@ -43,6 +49,7 @@ namespace Virgo
 			// HELPREQUESTED: How to apply Don't-Repeat-Yourself on this code block?
 			DWORD dwFlags{ 0 };
 			BOOL getHandleInformationResult{ ::GetHandleInformation(other.handle_, &dwFlags) };
+			// No need to check for getHandleInformationResult as on failure, dwFlags will be 0.
 			BOOL duplicateHandleResult{ ::DuplicateHandle(
 				::GetCurrentProcess(), other.handle_, 
 				::GetCurrentProcess(), &handle_, 0, 
@@ -50,6 +57,10 @@ namespace Virgo
 			};
 
 			// TODO: Throw exception depending on GetLastError().
+			if (!duplicateHandleResult)
+			{
+				throw Win32ErrorException{ ::GetLastError() };
+			}
 		}
 
 		/*
@@ -67,7 +78,7 @@ namespace Virgo
 		/*
 		 * Copy assignment.
 		 */
-		HandleType& operator=(const HandleType& other)
+		HandleType& operator=(const HandleType& other) nothrow(false)
 		{
 			if (this != &other)
 			{
@@ -80,6 +91,10 @@ namespace Virgo
 				};
 
 				// TODO: Throw exception depending on GetLastError().
+				if (!duplicateHandleResult)
+				{
+					throw Win32ErrorException{ ::GetLastError() };
+				}
 			}
 
 			return *this;
@@ -109,15 +124,25 @@ namespace Virgo
 		/*
 		 * Destructor
 		 */
-		virtual ~Handle()
+		virtual ~Handle() nothrow(true)
 		{
-			Close();
+			try
+			{
+				Close();
+			}
+			catch (Win32Exception const& ex)
+			{
+#ifdef _DEBUG
+				std::stringstream stream{};
+				
+#endif
+			}
 		}
 
 		/**
 		 * Closes the underlying handle.
 		 */
-		void Close()
+		void Close() nothrow(false)
 		{
 			static_cast<THandleImpl*>(this)->Close();
 		}

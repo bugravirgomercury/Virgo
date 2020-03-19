@@ -31,3 +31,6 @@
 *.out
 *.app
 /.vs/Virgo/v15
+/Debug
+/Virgo/Debug
+/Virgo/Source/scratchpad.cpp

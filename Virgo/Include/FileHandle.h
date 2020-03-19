@@ -23,10 +23,8 @@ namespace Virgo
 		static HandleType& Open(const std::string& path, const std::string& mode)
 		{
 			// TODO: Implement this function.
+			
 		}
-
-
-		
 
 		/* 
 		 * Closes the file.
