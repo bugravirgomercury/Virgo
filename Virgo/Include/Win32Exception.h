@@ -98,12 +98,15 @@ namespace Virgo
 	class Win32ErrorException : public Win32Exception<Win32ErrorException>
 	{
 	public:
+
 		/**
 		 * Construct from given error code.
 		 */
 		explicit Win32ErrorException(DWORD const &getLastErrorCode)
 			: Win32ExceptionType::Win32Exception(getLastErrorCode)
 		{
+			// using TWin32ExceptionImpl = Win32ErrorException;
+			// using Win32ExceptionType = Win32Exception<TWin32ExceptionImpl>;
 		}
 
 		/**
@@ -113,5 +116,21 @@ namespace Virgo
 			: Win32ErrorException::Win32ErrorException(::GetLastError())
 		{
 		}
+
+		/*
+		 * No need to add copy/move constructor/assignment operators as
+		 * the compiler will supply them for us. For the sake of explicitness,
+		 * we'll define them as default.
+		 */
+
+		Win32ErrorException(const Win32ErrorException&) = default;
+		Win32ErrorException(Win32ErrorException&&) = default;
+		Win32ErrorException& operator=(const Win32ErrorException&) = default;
+		Win32ErrorException& operator=(Win32ErrorException&&) = default;
+
+		/**
+		 * Gets the text representation of the exception from the system.
+		 */
+
 	};
 }

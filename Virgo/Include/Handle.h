@@ -24,11 +24,6 @@ namespace Virgo
 		 */
 		using HandleType = Handle<THandleImpl>;
 
-		/**
-		 * Specifies invalid handle value of this type of handle.
-		 */
-		static constexpr const HandleType INVALID{ INVALID_HANDLE_VALUE };
-
 		/*
 		 * Initialize from existing HANDLE.
 		 */
@@ -41,7 +36,7 @@ namespace Virgo
 		 * Copy constructor.
 		 */
 		explicit Handle(const HandleType& other)
-			: handle_(INVALID_HANDLE_VALUE) nothrow(false)
+			: handle_(INVALID_HANDLE_VALUE)
 		{
 			// HELPREQUESTED: Maybe get process handle from the handle and pass it onto 
 			// DuplicateHandle function for cross-process handle duplication.
@@ -78,7 +73,7 @@ namespace Virgo
 		/*
 		 * Copy assignment.
 		 */
-		HandleType& operator=(const HandleType& other) nothrow(false)
+		HandleType& operator=(const HandleType& other)
 		{
 			if (this != &other)
 			{
@@ -124,17 +119,18 @@ namespace Virgo
 		/*
 		 * Destructor
 		 */
-		virtual ~Handle() nothrow(true)
+		virtual ~Handle()
 		{
 			try
 			{
 				Close();
 			}
-			catch (Win32Exception const& ex)
+			catch (Win32ErrorException const& ex)
 			{
 #ifdef _DEBUG
 				std::stringstream stream{};
-				
+				stream << "Error occurred whilst closing handle - error #" << std::hex << ex.GetCode();
+				OutputDebugStringA(static_cast<LPCSTR>(stream.str().c_str()));
 #endif
 			}
 		}
@@ -142,7 +138,7 @@ namespace Virgo
 		/**
 		 * Closes the underlying handle.
 		 */
-		void Close() nothrow(false)
+		void Close()
 		{
 			static_cast<THandleImpl*>(this)->Close();
 		}
@@ -155,6 +151,6 @@ namespace Virgo
 			return handle_;
 		}
 	private:
-		HANDLE& handle_;
+		HANDLE handle_;
 	};
 }
