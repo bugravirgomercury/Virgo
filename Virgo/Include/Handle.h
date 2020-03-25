@@ -41,21 +41,7 @@ namespace Virgo
 			// HELPREQUESTED: Maybe get process handle from the handle and pass it onto 
 			// DuplicateHandle function for cross-process handle duplication.
 
-			// HELPREQUESTED: How to apply Don't-Repeat-Yourself on this code block?
-			DWORD dwFlags{ 0 };
-			BOOL getHandleInformationResult{ ::GetHandleInformation(other.handle_, &dwFlags) };
-			// No need to check for getHandleInformationResult as on failure, dwFlags will be 0.
-			BOOL duplicateHandleResult{ ::DuplicateHandle(
-				::GetCurrentProcess(), other.handle_, 
-				::GetCurrentProcess(), &handle_, 0, 
-				dwFlags & HANDLE_FLAG_INHERIT, DUPLICATE_SAME_ACCESS) 
-			};
-
-			// TODO: Throw exception depending on GetLastError().
-			if (!duplicateHandleResult)
-			{
-				throw Win32ErrorException{ ::GetLastError() };
-			}
+			DupHandle(other.handle_, handle_);
 		}
 
 		/*
@@ -77,19 +63,7 @@ namespace Virgo
 		{
 			if (this != &other)
 			{
-				DWORD dwFlags{ 0 };
-				BOOL getHandleInformationResult{ ::GetHandleInformation(other.handle_, &dwFlags) };
-				BOOL duplicateHandleResult{ ::DuplicateHandle(
-					::GetCurrentProcess(), other.handle_,
-					::GetCurrentProcess(), &handle_, 0,
-					dwFlags & HANDLE_FLAG_INHERIT, DUPLICATE_SAME_ACCESS)
-				};
-
-				// TODO: Throw exception depending on GetLastError().
-				if (!duplicateHandleResult)
-				{
-					throw Win32ErrorException{ ::GetLastError() };
-				}
+				DupHandle(other.handle_, handle_);
 			}
 
 			return *this;
@@ -125,11 +99,11 @@ namespace Virgo
 			{
 				Close();
 			}
-			catch (Win32ErrorException const& ex)
+			catch (std::system_error const& ex)
 			{
 #ifdef _DEBUG
 				std::stringstream stream{};
-				stream << "Error occurred whilst closing handle - error #" << std::hex << ex.GetCode();
+				stream << "Error occurred whilst closing handle - error #" << std::hex << ex.code();
 				OutputDebugStringA(static_cast<LPCSTR>(stream.str().c_str()));
 #endif
 			}
@@ -151,6 +125,26 @@ namespace Virgo
 			return handle_;
 		}
 	private:
+		/**
+		 * Duplicates a handle to b handle.
+		 */
+		static void DupHandle(const HANDLE& a, HANDLE& b)
+		{
+			DWORD dwFlags{ 0 };
+			BOOL getHandleInformationResult{ ::GetHandleInformation(a, &dwFlags) };
+			BOOL duplicateHandleResult{ ::DuplicateHandle(
+				::GetCurrentProcess(), a,
+				::GetCurrentProcess(), &b, 0,
+				dwFlags & HANDLE_FLAG_INHERIT, DUPLICATE_SAME_ACCESS)
+			};
+
+			// TODO: Throw exception depending on GetLastError().
+			if (!duplicateHandleResult)
+			{
+				throw NewException(::GetLastError());
+			}
+		}
+
 		HANDLE handle_;
 	};
 }

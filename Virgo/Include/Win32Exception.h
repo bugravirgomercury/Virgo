@@ -5,132 +5,26 @@
 namespace Virgo
 {
 	/**
-	 * Defines types used inside exception class.
+	 * Makes exception to be thrown according to errorCode.
 	 */
-	template <class TTargetClass>
-	struct Win32ExceptionTraits
+	std::system_error NewException(DWORD errorCode)
 	{
-		/*
-		 * Defines the type of error code this kind of exception uses.
-		 * Definition of this type definition is mandatory as base class
-		 * retrieves and uses it. Its definition must be complete type
-		 * as it is used for declaring a member field in the base class.
-		 *
-		 * Default type is void, to enforce redefinition of this trait.
-		 */
-		using ExceptionCodeType = VOID;
-	};
+		LPSTR psz{ nullptr };
+		const DWORD cchMessage{ ::FormatMessageA(
+			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+			NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPSTR>(&psz), 0, NULL) };
 
-	// NOTE: Add forward declarations of exception classes here as traits definitions
-	// need it.
-
-	class Win32ErrorException;
-
-	/*
-	 * Traits for Win32ErrorException.
-	 */
-	template <>
-	struct Win32ExceptionTraits<Win32ErrorException>
-	{
-		/**
-		 * GetLastError returns DWORD results.
-		 */
-		using ExceptionCodeType = DWORD;
-	};
-
-	/**
-	 * Exception template class for encapsulating different
-	 * kinds of error return types (GetLastError, HRESULT etc)
-	 */
-	template <
-		class TWin32ExceptionImpl, 
-		typename Traits = Win32ExceptionTraits<TWin32ExceptionImpl>>
-	class Win32Exception
-	{
-	public:
-		/**
-		 * Gets rid of unnecessary template argument redundancy.
-		 */
-		using Win32ExceptionType = Win32Exception<TWin32ExceptionImpl>;
-
-		/**
-		 * Retrieves error code type which child class is able to handle.
-		 */
-		using Win32ExceptionCodeType = typename Traits::ExceptionCodeType;
-
-		/**
-		 * Construct exception with defined error code.
-		 */
-		explicit Win32Exception(Win32ExceptionCodeType const &error)
-			: code_(error)
+		if (cchMessage > 0)
 		{
+			auto destructor = [](void* p) { ::LocalFree(p); };
+			std::unique_ptr<CHAR, decltype(destructor)> ptr{ psz, destructor };
+			std::string string{ ptr.get(), cchMessage };
+			return std::system_error(errorCode, std::system_category(), string.c_str());
 		}
-
-		/**
-		 * Get error code resulting in this instance of exception.
-		 */
-		const Win32ExceptionCodeType& GetCode() const
+		else
 		{
-			return code_;
+			auto error_code{ ::GetLastError() };
+			throw std::system_error(errorCode, std::system_category(), "Failed to retrieve error text from system");
 		}
-
-		/*
-		 * NOTE: I don't add conversion operator 'operator Win32ExceptionCodeType'
-		 * as an implicit cast as this class doesn't directly represent an error 
-		 * code itself, it represents the error itself. For code clarity though,
-		 * we recommend using Win32Exception::GetCode().
-		 */
-		explicit operator Win32ExceptionCodeType() const
-		{
-			return code_;
-		}
-
-	private:
-		/**
-		 * Holds the error code.
-		 */
-		Win32ExceptionCodeType code_;
-	};
-
-	/**
-	 * Encapsulates GetLastError() kind of errors.
-	 */
-	class Win32ErrorException : public Win32Exception<Win32ErrorException>
-	{
-	public:
-
-		/**
-		 * Construct from given error code.
-		 */
-		explicit Win32ErrorException(DWORD const &getLastErrorCode)
-			: Win32ExceptionType::Win32Exception(getLastErrorCode)
-		{
-			// using TWin32ExceptionImpl = Win32ErrorException;
-			// using Win32ExceptionType = Win32Exception<TWin32ExceptionImpl>;
-		}
-
-		/**
-		 * Construct from last error code returned by GetLastError().
-		 */
-		explicit Win32ErrorException()
-			: Win32ErrorException::Win32ErrorException(::GetLastError())
-		{
-		}
-
-		/*
-		 * No need to add copy/move constructor/assignment operators as
-		 * the compiler will supply them for us. For the sake of explicitness,
-		 * we'll define them as default.
-		 */
-
-		Win32ErrorException(const Win32ErrorException&) = default;
-		Win32ErrorException(Win32ErrorException&&) = default;
-		Win32ErrorException& operator=(const Win32ErrorException&) = default;
-		Win32ErrorException& operator=(Win32ErrorException&&) = default;
-
-		/**
-		 * Gets the text representation of the exception from the system.
-		 */
-
-	};
+	}
 }
