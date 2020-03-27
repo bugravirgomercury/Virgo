@@ -59,91 +59,42 @@ namespace Virgo
 		/*
 		 * Copy assignment.
 		 */
-		HandleType& operator=(const HandleType& other)
-		{
-			if (this != &other)
-			{
-				DupHandle(other.handle_, handle_);
-			}
-
-			return *this;
-		}
+		HandleType& operator=(const HandleType& other);
 
 		/*
 		 * Move assignment.
 		 */
-		HandleType& operator=(HandleType&& other)
-		{
-			if (this != &other)
-			{
-				if (handle_ != INVALID_HANDLE_VALUE)
-				{
-					// TODO: Check for result and throw exception accordingly.
-					other.Close();
-				}
-
-				handle_ = other.handle_;
-
-				other.handle_ = INVALID_HANDLE_VALUE;
-			}
-
-			return *this;
-		}
+		HandleType& operator=(HandleType&& other);
 
 		/*
 		 * Destructor
 		 */
-		virtual ~Handle()
-		{
-			try
-			{
-				Close();
-			}
-			catch (std::system_error const& ex)
-			{
-#ifdef _DEBUG
-				std::stringstream stream{};
-				stream << "Error occurred whilst closing handle - error #" << std::hex << ex.code();
-				OutputDebugStringA(static_cast<LPCSTR>(stream.str().c_str()));
-#endif
-			}
-		}
+		virtual ~Handle();
 
 		/**
 		 * Closes the underlying handle.
 		 */
-		void Close()
-		{
-			static_cast<THandleImpl*>(this)->Close();
-		}
+		void Close();
 
-		/*
+		/**
 		 * Conversion operator for getting handle value.
 		 */
-		operator HANDLE&() const
-		{
-			return handle_;
-		}
+		operator HANDLE&() const;
+
+		/**
+		 * Get underlying handle.
+		 */
+		HANDLE& GetHandle();
+
+		/**
+		 * Get underlying handle (const)
+		 */
+		const HANDLE& GetHandle() const;
 	private:
 		/**
 		 * Duplicates a handle to b handle.
 		 */
-		static void DupHandle(const HANDLE& a, HANDLE& b)
-		{
-			DWORD dwFlags{ 0 };
-			BOOL getHandleInformationResult{ ::GetHandleInformation(a, &dwFlags) };
-			BOOL duplicateHandleResult{ ::DuplicateHandle(
-				::GetCurrentProcess(), a,
-				::GetCurrentProcess(), &b, 0,
-				dwFlags & HANDLE_FLAG_INHERIT, DUPLICATE_SAME_ACCESS)
-			};
-
-			// TODO: Throw exception depending on GetLastError().
-			if (!duplicateHandleResult)
-			{
-				throw NewException(::GetLastError());
-			}
-		}
+		static void DupHandle(const HANDLE& a, HANDLE& b);
 
 		HANDLE handle_;
 	};

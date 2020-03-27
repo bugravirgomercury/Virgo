@@ -7,7 +7,7 @@ namespace Virgo
 	/**
 	 * Makes exception to be thrown according to errorCode.
 	 */
-	std::system_error NewException(DWORD errorCode)
+	inline std::system_error NewException(DWORD errorCode)
 	{
 		LPSTR psz{ nullptr };
 		const DWORD cchMessage{ ::FormatMessageA(
