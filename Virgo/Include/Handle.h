@@ -32,7 +32,7 @@ namespace Virgo
 		{
 		}
 
-		/*
+		/**
 		 * Copy constructor.
 		 */
 		explicit Handle(const HandleType& other)
@@ -40,6 +40,9 @@ namespace Virgo
 		{
 			// HELPREQUESTED: Maybe get process handle from the handle and pass it onto 
 			// DuplicateHandle function for cross-process handle duplication.
+
+			HANDLE& selfHandle{ static_cast<THandleImpl*>(this)->handle_ };
+			HANDLE& otherHandle{ static_cast<THandleImpl*>(other)->handle_ };
 
 			DupHandle(other.handle_, handle_);
 		}
@@ -61,6 +64,9 @@ namespace Virgo
 		 */
 		HandleType& operator=(const HandleType& other)
 		{
+			THandleImpl& self{ static_cast<THandleImpl&>(*this) };
+
+
 			if (this != &other)
 			{
 				DupHandle(other.handle_, handle_);
@@ -72,17 +78,20 @@ namespace Virgo
 		/*
 		 * Move assignment.
 		 */
-		HandleType& operator=(HandleType&& other)
+		HandleType& operator=(HandleType&& other_)
 		{
+			THandleImpl& self{ static_cast<THandleImpl&>(*this) };
+			THandleImpl& other{ static_cast<THandleImpl&>(other_) };
+
 			if (this != &other)
 			{
-				if (handle_ != INVALID_HANDLE_VALUE)
+				if (self.handle_ != INVALID_HANDLE_VALUE)
 				{
 					// TODO: Check for result and throw exception accordingly.
 					other.Close();
 				}
 
-				handle_ = other.handle_;
+				self.handle_ = other.handle_;
 
 				other.handle_ = INVALID_HANDLE_VALUE;
 			}
@@ -114,7 +123,7 @@ namespace Virgo
 		 */
 		void Close()
 		{
-			static_cast<THandleImpl*>(this)->Close();
+			static_cast<THandleImpl&>(*this).Close();
 		}
 
 		/*
@@ -122,7 +131,7 @@ namespace Virgo
 		 */
 		operator HANDLE&() const
 		{
-			return handle_;
+			return static_cast<THandleImpl const&>(*this).operator HANDLE&();
 		}
 	private:
 		/**
