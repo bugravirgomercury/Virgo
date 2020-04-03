@@ -147,8 +147,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Include\FileHandle.h" />
     <ClInclude Include="Include\Handle.h" />
+    <ClInclude Include="Include\hstream.h" />
     <ClInclude Include="Include\Win32Defs.h" />
     <ClInclude Include="Include\Win32Exception.h" />
   </ItemGroup>
