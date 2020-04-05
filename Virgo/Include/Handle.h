@@ -8,7 +8,7 @@
 #include <sstream>
 #endif
 
-#include "Win32Exception.h"
+#include "win32exception.h"
 
 namespace virgo
 {

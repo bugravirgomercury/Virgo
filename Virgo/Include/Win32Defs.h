@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#undef max
 
 #include <string>
 #include <memory>
@@ -59,3 +60,5 @@ namespace virgo
   using tstring = std::basic_string<TCHAR>;
   using cstring = std::basic_string<CHAR>;
 }
+
+#include <windows.h>
