@@ -1,62 +1,64 @@
 #pragma once
 
 #include <windows.h>
+#undef max
 
 #include <string>
 #include <memory>
 #include <new>
 #include <limits>
 
-namespace Virgo 
+namespace virgo
 {
-	/**
-	 * Defines allocator traits for LocalAlloc/LocalFree pair.
-	 */
-	template <class T>
-	class LocalAllocator
-	{
-	public:
-		using value_type = T;
+  /**
+   * Defines allocator traits for LocalAlloc/LocalFree pair.
+   */
+  template <class T>
+  class localalloc_allocator
+  {
+  public:
+    using value_type = T;
 
-		LocalAllocator() = default;
+    localalloc_allocator() = default;
 
-		template <class U> constexpr LocalAllocator(const LocalAllocator<U>&) noexcept
-		{
-		}
+    template <class U> constexpr localalloc_allocator(const localalloc_allocator<U>&) noexcept
+    {
+    }
 
-		T* allocate(std::size_t n)
-		{
-			if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
-				throw std::bad_alloc();
+    T* allocate(std::size_t n)
+    {
+      if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+        throw std::bad_alloc();
 
-			if (auto p = static_cast<T*>(::LocalAlloc(LPTR, n * sizeof(T))))
-				return p;
+      if (auto p = static_cast<T*>(::LocalAlloc(LPTR, n * sizeof(T))))
+        return p;
 
-			throw std::bad_alloc();
-		}
+      throw std::bad_alloc();
+    }
 
-		void deallocate(T* p, std::size_t) noexcept
-		{
-			::LocalFree(p);
-		}
-	};
-	
-	template <class T, class U>
-	bool operator==(const LocalAllocator<T>&, const LocalAllocator<U>&)
-	{
-		return true;
-	}
+    void deallocate(T* p, std::size_t) noexcept
+    {
+      ::LocalFree(p);
+    }
+  };
 
-	template <class T, class U>
-	bool operator!=(const LocalAllocator<T>&, const LocalAllocator<U>&)
-	{
-		return false;
-	}
+  template <class T, class U>
+  bool operator==(const localalloc_allocator<T>&, const localalloc_allocator<U>&)
+  {
+    return true;
+  }
 
-	/**
-	 * Defines string class usable with Win32 APIs.
-	 */
-	using TCharString = std::basic_string<TCHAR>;
-	using WCharString = std::basic_string<WCHAR>;
-	using CCharString = std::basic_string<CHAR>;
+  template <class T, class U>
+  bool operator!=(const localalloc_allocator<T>&, const localalloc_allocator<U>&)
+  {
+    return false;
+  }
+
+  /**
+   * Defines string class usable with Win32 APIs.
+   */
+  using tstring = std::basic_string<TCHAR>;
+  using cstring = std::basic_string<CHAR>;
 }
+
+#include <windows.h>
