@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\com.h" />
     <ClInclude Include="Include\handle.h" />
     <ClInclude Include="Include\hstream.h" />
     <ClInclude Include="Include\win32defs.h" />
